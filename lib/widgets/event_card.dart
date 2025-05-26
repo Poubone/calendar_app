@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models/event.dart';
+import 'package:intl/intl.dart';
 
 class EventCard extends StatelessWidget {
   final Event event;
   final Animation<double> animation;
 
-  const EventCard({
-    super.key,
-    required this.event,
-    required this.animation,
-  });
+  const EventCard({super.key, required this.event, required this.animation});
 
   @override
   Widget build(BuildContext context) {
@@ -17,10 +14,7 @@ class EventCard extends StatelessWidget {
       position: Tween<Offset>(
         begin: const Offset(-1, 0),
         end: Offset.zero,
-      ).animate(CurvedAnimation(
-        parent: animation,
-        curve: Curves.easeOut,
-      )),
+      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
       child: FadeTransition(
         opacity: animation,
         child: Card(
@@ -32,8 +26,8 @@ class EventCard extends StatelessWidget {
             leading: const Icon(Icons.event, color: Colors.blue),
             title: Text(event.title),
             subtitle: Text(
-              '${event.startTime.hour.toString().padLeft(2, '0')}h'
-              ' - ${event.endTime.hour.toString().padLeft(2, '0')}h',
+              '${DateFormat.Hm().format(event.startTime.toLocal())} - '
+              '${DateFormat.Hm().format(event.endTime.toLocal())}',
             ),
           ),
         ),

@@ -21,6 +21,7 @@ class _HomePageState extends State<HomePage> {
   DateTime? _selectedDay;
   List<Event> _events = [];
   bool _isLoading = true;
+  CalendarFormat _calendarFormat = CalendarFormat.month;
 
   @override
   void initState() {
@@ -72,8 +73,124 @@ class _HomePageState extends State<HomePage> {
           ),
           IconButton(
             icon: const Icon(Icons.notifications),
-            onPressed: () {
-              NotificationService.showTestNotification();
+            onPressed: () async {
+              final pending =
+                  await NotificationService.getPendingNotifications();
+
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text('Notifications programmées'),
+                    content: SizedBox(
+                      width: double.maxFinite,
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: [
+                          if (pending.isEmpty)
+                            const Text('Aucune notification programmée'),
+                          ...pending.map(
+                            (n) => ListTile(
+                              title: Text(n.title ?? 'Sans titre'),
+                              subtitle: Text(n.payload ?? 'ID ${n.id}'),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.close),
+                                tooltip: 'Supprimer cette notification',
+                                onPressed: () async {
+                                  await NotificationService.cancelNotification(
+                                    n.id,
+                                  );
+
+                                  final refreshed =
+                                      await NotificationService.getPendingNotifications();
+
+                                  if (context.mounted) {
+                                    Navigator.pop(
+                                      context,
+                                    ); // Ferme l'ancien dialogue
+
+                                    // Rouvre un nouveau dialogue avec la liste mise à jour
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          title: const Text(
+                                            'Notifications programmées',
+                                          ),
+                                          content: SizedBox(
+                                            width: double.maxFinite,
+                                            child: ListView(
+                                              shrinkWrap: true,
+                                              children: [
+                                                if (refreshed.isEmpty)
+                                                  const Text(
+                                                    'Aucune notification programmée',
+                                                  ),
+                                                ...refreshed.map(
+                                                  (notif) => ListTile(
+                                                    title: Text(
+                                                      notif.title ??
+                                                          'Sans titre',
+                                                    ),
+                                                    subtitle: Text(
+                                                      notif.payload ??
+                                                          'ID ${notif.id}',
+                                                    ),
+                                                    trailing: IconButton(
+                                                      icon: const Icon(
+                                                        Icons.close,
+                                                      ),
+                                                      tooltip:
+                                                          'Supprimer cette notification',
+                                                      onPressed: () async {
+                                                        await NotificationService.cancelNotification(
+                                                          notif.id,
+                                                        );
+                                                        Navigator.pop(context);
+                                                      },
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
+                                              child: const Text('Fermer'),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+
+                          const Divider(),
+                          TextButton.icon(
+                            icon: const Icon(Icons.notification_important),
+                            label: const Text('Tester une notification'),
+                            onPressed: () {
+                              NotificationService.showTestNotification();
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Fermer'),
+                      ),
+                    ],
+                  );
+                },
+              );
             },
           ),
         ],
@@ -84,6 +201,12 @@ class _HomePageState extends State<HomePage> {
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
+            calendarFormat: _calendarFormat,
+            onFormatChanged: (format) {
+              setState(() {
+                _calendarFormat = format;
+              });
+            },
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
             eventLoader: _getEventsForDay,
             onDaySelected: (selected, focused) {
@@ -103,6 +226,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
+
           const SizedBox(height: 16),
           Expanded(
             child: _isLoading
@@ -126,7 +250,15 @@ class _HomePageState extends State<HomePage> {
                           // Si on revient avec "delete", on recharge les events
                           if (result == 'delete') {
                             await EventService.deleteEvent(event.id);
-                            setState(() => _loadEvents());
+                            await NotificationService.cancelNotification(
+                              NotificationService.generateId(event.id),
+                            );
+
+                            setState(() {
+                              _isLoading = true;
+                            });
+
+                            _loadEvents();
                           }
                         },
                         child: Hero(

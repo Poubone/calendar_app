@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/event.dart';
+import 'package:intl/intl.dart'; // en haut du fichier
 
 class EventDetailPage extends StatelessWidget {
   final Event event;
@@ -22,49 +23,53 @@ class EventDetailPage extends StatelessWidget {
             ),
           ],
         ),
-        body: AnimatedContainer(
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                event.title,
-                style: Theme.of(context).textTheme.headlineLarge,
-              ),
-              const SizedBox(height: 16),
-              AnimatedOpacity(
-                opacity: 1.0,
-                duration: const Duration(seconds: 1),
-                child: Text(
-                  (event.description?.isNotEmpty ?? false)
-                      ? event.description!
-                      : 'Pas de description',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
+        body: SafeArea(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+            padding: const EdgeInsets.all(24),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.schedule),
-                  const SizedBox(width: 8),
                   Text(
-                    '${event.startTime.hour.toString().padLeft(2, '0')}h${event.startTime.minute.toString().padLeft(2, '0')}'
-                    ' - ${event.endTime.hour.toString().padLeft(2, '0')}h${event.endTime.minute.toString().padLeft(2, '0')}',
+                    event.title,
+                    style: Theme.of(context).textTheme.headlineLarge,
                   ),
+                  const SizedBox(height: 16),
+                  AnimatedOpacity(
+                    opacity: 1.0,
+                    duration: const Duration(seconds: 1),
+                    child: Text(
+                      (event.description?.isNotEmpty ?? false)
+                          ? event.description!
+                          : 'Pas de description',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      const Icon(Icons.schedule),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${DateFormat.Hm().format(event.startTime.toLocal())} - '
+                        '${DateFormat.Hm().format(event.endTime.toLocal())}',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (event.reminderMinutes != null)
+                    Row(
+                      children: [
+                        const Icon(Icons.alarm),
+                        const SizedBox(width: 8),
+                        Text('${event.reminderMinutes} min avant'),
+                      ],
+                    ),
                 ],
               ),
-              const SizedBox(height: 16),
-              if (event.reminderMinutes != null)
-                Row(
-                  children: [
-                    const Icon(Icons.alarm),
-                    const SizedBox(width: 8),
-                    Text('${event.reminderMinutes} min avant'),
-                  ],
-                ),
-            ],
+            ),
           ),
         ),
       ),

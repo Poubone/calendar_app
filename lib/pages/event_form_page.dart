@@ -59,6 +59,9 @@ class _EventFormPageState extends State<EventFormPage> {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt');
 
+    final startUtc = start.toUtc();
+    final endUtc = end.toUtc();
+
     final response = await http.post(
       Uri.parse('$apiBaseUrl/events'),
       headers: {
@@ -68,8 +71,8 @@ class _EventFormPageState extends State<EventFormPage> {
       body: jsonEncode({
         'title': _titleController.text,
         'description': _descController.text,
-        'startTime': start.toIso8601String(),
-        'endTime': end.toIso8601String(),
+        'startTime': startUtc.toIso8601String(),
+        'endTime': endUtc.toIso8601String(),
         'isAllDay': false,
         'category': null,
         'recurrenceRule': null,
@@ -79,11 +82,13 @@ class _EventFormPageState extends State<EventFormPage> {
 
     if (response.statusCode == 201) {
       await AlarmPermissionHelper.promptExactAlarmPermission(context);
+      final eventId = jsonDecode(response.body)['eventId']; 
+
 
       if (_reminderMinutes != null) {
         if (start.isAfter(DateTime.now().add(const Duration(seconds: 3)))) {
           await NotificationService.scheduleNotification(
-            id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+            id: NotificationService.generateId(eventId),            
             title: _titleController.text,
             scheduledTime: start, 
             reminderMinutes: _reminderMinutes!, 

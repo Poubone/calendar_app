@@ -11,7 +11,7 @@ class NotificationService {
     required int id,
     required String title,
     required DateTime scheduledTime,
-    required int reminderMinutes, 
+    required int reminderMinutes,
   }) async {
     final androidDetails = AndroidNotificationDetails(
       'event_channel',
@@ -21,21 +21,43 @@ class NotificationService {
     );
 
     final notificationDetails = NotificationDetails(android: androidDetails);
-    final scheduled = scheduledTime.subtract(Duration(minutes: reminderMinutes));
-    print('🕒 Notification prévue pour : $scheduled');
+    final localScheduled = scheduledTime.toLocal();
+    final finalScheduledTime = localScheduled.subtract(
+      Duration(minutes: reminderMinutes),
+    );
+
+    print('🕒 Notification prévue pour (locale) : $finalScheduledTime');
+
+    final tzDate = tz.TZDateTime.local(
+      finalScheduledTime.year,
+      finalScheduledTime.month,
+      finalScheduledTime.day,
+      finalScheduledTime.hour,
+      finalScheduledTime.minute,
+    );
+
+    final now = tz.TZDateTime.now(tz.local);
+    await _notifications.zonedSchedule(
+      999999,
+      'Test Immédiat',
+      'Juste pour test',
+      now.add(const Duration(minutes: 1)),
+      notificationDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.dateAndTime,
+    );
+
     await _notifications.zonedSchedule(
       id,
       title,
       'Événement à venir',
-      tz.TZDateTime.from(
-        scheduled, 
-        tz.local,
-      ),
+      tzDate,
       notificationDetails,
       matchDateTimeComponents: DateTimeComponents.dateAndTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: 'eventId:$id|time:${tzDate.toIso8601String()}',
     );
-    print('🔔 Notification programmée pour $title à ${scheduledTime.toIso8601String()}');
+    print('✅ Notification programmée pour $title à $tzDate');
   }
 
   static Future<void> showTestNotification() async {
@@ -74,9 +96,7 @@ class NotificationService {
 
       final scheduled = event.startTime.subtract(Duration(minutes: reminder));
       if (scheduled.isBefore(now)) continue;
-
-      final notifId = _generateId(event.id);
-
+      final notifId = generateId(event.id);
       if (!pendingIds.contains(notifId)) {
         await scheduleNotification(
           id: notifId,
@@ -90,8 +110,32 @@ class NotificationService {
     }
   }
 
-  /// Convertit un ID UUID en entier stable pour FlutterLocalNotifications
-  static int _generateId(String uuid) {
-    return uuid.hashCode & 0x7FFFFFFF; // entier positif
+  static int generateId(String eventId) => eventId.hashCode;
+
+  static Future<List<PendingNotificationRequest>>
+  getPendingNotifications() async {
+    return await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+  }
+
+  static Future<void> cancelNotification(int id) async {
+  await flutterLocalNotificationsPlugin.cancel(id);
+  print('❌ Notification $id annulée');
+}
+
+
+  static Future<void> clearPastNotifications() async {
+    final pending = await flutterLocalNotificationsPlugin
+        .pendingNotificationRequests();
+
+    for (final n in pending) {
+      final match = RegExp(r'time:(.*?)$').firstMatch(n.payload ?? '');
+      final scheduledStr = match?.group(1);
+      final scheduledTime = DateTime.tryParse(scheduledStr ?? '');
+
+      if (scheduledTime != null && scheduledTime.isBefore(DateTime.now())) {
+        await flutterLocalNotificationsPlugin.cancel(n.id);
+        print('🗑️ Notification expirée supprimée (ID: ${n.id})');
+      }
+    }
   }
 }

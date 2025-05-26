@@ -26,6 +26,7 @@ class EventService {
         for (final event in events) {
           await EventDatabase.insertEvent(event);
         }
+        await NotificationService.clearPastNotifications();
         await NotificationService.syncPendingNotifications(events);
 
         return events;
