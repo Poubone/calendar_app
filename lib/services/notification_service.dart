@@ -21,21 +21,21 @@ class NotificationService {
     );
 
     final notificationDetails = NotificationDetails(android: androidDetails);
-
+    final scheduled = scheduledTime.subtract(Duration(minutes: reminderMinutes));
+    print('🕒 Notification prévue pour : $scheduled');
     await _notifications.zonedSchedule(
       id,
       title,
       'Événement à venir',
       tz.TZDateTime.from(
-        scheduledTime.subtract(
-          Duration(minutes: reminderMinutes),
-        ), 
+        scheduled, 
         tz.local,
       ),
       notificationDetails,
       matchDateTimeComponents: DateTimeComponents.dateAndTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
+    print('🔔 Notification programmée pour $title à ${scheduledTime.toIso8601String()}');
   }
 
   static Future<void> showTestNotification() async {
