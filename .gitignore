@@ -1,0 +1,39 @@
+# Flutter core
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+.metadata
+
+# Platform folders (remove if not needed)
+# Ignore Windows/Mac/Linux unless you modify their content
+web/
+macos/
+linux/
+ios/
+
+# Keep Android & Web
+# android/
+# web/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Build outputs
+*.apk
+*.aab
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Lock files (keep pubspec.lock if you're building apps)
+# pubspec.lock  # Optional: keep if this is an app, ignore if it's a package
