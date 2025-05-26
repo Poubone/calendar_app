@@ -81,20 +81,15 @@ class _EventFormPageState extends State<EventFormPage> {
       await AlarmPermissionHelper.promptExactAlarmPermission(context);
 
       if (_reminderMinutes != null) {
-        final scheduledTime = start.subtract(
-          Duration(minutes: _reminderMinutes!),
-        );
-
-        if (scheduledTime.isAfter(
-          DateTime.now().add(const Duration(seconds: 3)),
-        )) {
+        if (start.isAfter(DateTime.now().add(const Duration(seconds: 3)))) {
           await NotificationService.scheduleNotification(
             id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
             title: _titleController.text,
-            scheduledTime: scheduledTime,
+            scheduledTime: start, 
+            reminderMinutes: _reminderMinutes!, 
           );
         } else {
-          print('⏩ Notification non programmée (trop proche)');
+          print('⏩ Notification non programmée (événement trop proche)');
         }
       }
 
