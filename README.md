@@ -1,6 +1,6 @@
 # calendar_app
-
-A new Flutter project for a calendar application. 
+Une application de calendrier simple en Flutter.
+Le back est en Dart
 
 
 FLUTTER B3 - PROJET,
