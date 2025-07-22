@@ -4,7 +4,9 @@ import 'home_page.dart';
 import 'login_page.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final VoidCallback? onToggleTheme;
+  final ThemeMode? themeMode;
+  const SplashScreen({super.key, this.onToggleTheme, this.themeMode});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -24,12 +26,18 @@ class _SplashScreenState extends State<SplashScreen> {
     if (token != null && token.isNotEmpty) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
+        MaterialPageRoute(builder: (_) => HomePage(
+          onToggleTheme: widget.onToggleTheme ?? () {},
+          themeMode: widget.themeMode,
+        )),
       );
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
+        MaterialPageRoute(builder: (_) => LoginPage(
+          onToggleTheme: widget.onToggleTheme ?? () {},
+          themeMode: widget.themeMode,
+        )),
       );
     }
   }

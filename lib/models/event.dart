@@ -1,3 +1,5 @@
+import 'category.dart';
+
 class Event {
   final String id;
   final String title;
@@ -5,7 +7,7 @@ class Event {
   final DateTime startTime;
   final DateTime endTime;
   final bool isAllDay;
-  final String? category;
+  final Category? category;
   final String? recurrenceRule;
   final int? reminderMinutes;
 
@@ -28,11 +30,11 @@ class Event {
         startTime: DateTime.parse(json['startTime']),
         endTime: DateTime.parse(json['endTime']),
         isAllDay: json['isAllDay'] == 1,
-        category: json['category'],
+        category: json['category'] != null && json['category'] is Map<String, dynamic>
+            ? Category.fromJson(json['category'])
+            : null,
         recurrenceRule: json['recurrenceRule'],
         reminderMinutes: json['reminderMinutes'],
-
-        
       );
 
   Map<String, dynamic> toJson() => {
@@ -42,7 +44,7 @@ class Event {
         'startTime': startTime.toIso8601String(),
         'endTime': endTime.toIso8601String(),
         'isAllDay': isAllDay ? 1 : 0,
-        'category': category,
+        'categoryId': category?.id,
         'recurrenceRule': recurrenceRule,
         'reminderMinutes': reminderMinutes,
       };

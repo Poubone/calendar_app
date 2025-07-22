@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/event.dart';
 import 'package:intl/intl.dart'; // en haut du fichier
+import 'event_form_page.dart';
+import '../services/event_service.dart';
 
 class EventDetailPage extends StatelessWidget {
   final Event event;
@@ -16,9 +18,39 @@ class EventDetailPage extends StatelessWidget {
           title: Text('Détail'),
           actions: [
             IconButton(
-              icon: const Icon(Icons.delete),
+              icon: const Icon(Icons.edit),
+              tooltip: 'Modifier',
               onPressed: () {
-                Navigator.pop(context, 'delete');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => EventFormPage(event: event)),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Supprimer'),
+                    content: const Text('Voulez-vous vraiment supprimer cet événement ?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Annuler'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Supprimer'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true) {
+                  await EventService.deleteEvent(event.id);
+                  if (context.mounted) Navigator.pop(context, 'delete');
+                }
               },
             ),
           ],

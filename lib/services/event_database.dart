@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:calendar_app/models/event.dart';
+import 'package:calendar_app/models/category.dart';
 
 class EventDatabase {
   static Database? _database;
@@ -35,9 +36,16 @@ class EventDatabase {
         startTime TEXT NOT NULL,
         endTime TEXT NOT NULL,
         isAllDay INTEGER,
-        category TEXT,
+        categoryId TEXT,
         recurrenceRule TEXT,
         reminderMinutes INTEGER
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE categories (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        color TEXT
       )
     ''');
   }
@@ -47,6 +55,21 @@ static Future<void> insertEvent(Event event) async {
   await db.insert('events', event.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
 }
 
+  static Future<void> insertCategory(Category category) async {
+    final db = await database;
+    await db.insert('categories', category.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  static Future<List<Category>> getCategories() async {
+    final db = await database;
+    final maps = await db.query('categories');
+    return maps.map((e) => Category.fromJson(e)).toList();
+  }
+
+  static Future<void> clearCategories() async {
+    final db = await database;
+    await db.delete('categories');
+  }
 
   static Future<List<Event>> getEvents() async {
     final db = await database;
